@@ -1,0 +1,27 @@
+Feature,Importance
+Attendance,0.3819839200404591
+Hours_Studied,0.24211935837212326
+Previous_Scores,0.0946273977243309
+Tutoring_Sessions,0.038326319473307134
+Sleep_Hours,0.027851212275649323
+Physical_Activity,0.026641611499599496
+Parental_Involvement_Low,0.020907275755484345
+Access_to_Resources_Low,0.017810627210664738
+Access_to_Resources_Medium,0.011829483338404742
+Parental_Education_Level_Postgraduate,0.010926351261556059
+Peer_Influence_Positive,0.010453148936242211
+Parental_Education_Level_High School,0.009776831872283264
+Learning_Disabilities_Yes,0.009599188861213056
+Parental_Involvement_Medium,0.009408076300509917
+Motivation_Level_Low,0.009363740108224558
+Extracurricular_Activities_Yes,0.009200953983117837
+Family_Income_Low,0.00898844399586852
+Teacher_Quality_Medium,0.008586047650161339
+School_Type_Public,0.008064181842007053
+Distance_from_Home_Near,0.007913416524226289
+Peer_Influence_Neutral,0.006904552621591349
+Family_Income_Medium,0.006494150079360687
+Internet_Access_Yes,0.005913448431287386
+Motivation_Level_Medium,0.005550679066344052
+Distance_from_Home_Moderate,0.005495895301663445
+Teacher_Quality_Low,0.0052636874743198095

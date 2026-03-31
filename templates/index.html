@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance Prediction</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f8fc;
+            --panel: rgba(255, 255, 255, 0.94);
+            --panel-strong: #ffffff;
+            --text: #14213d;
+            --muted: #5c677d;
+            --primary: #0f766e;
+            --primary-dark: #115e59;
+            --accent: #f59e0b;
+            --danger: #b42318;
+            --border: rgba(20, 33, 61, 0.1);
+            --shadow: 0 24px 50px rgba(15, 23, 42, 0.08);
+            --radius: 18px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Space Grotesk", sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(16, 185, 129, 0.14), transparent 34%),
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.14), transparent 32%),
+                linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+            padding: 28px 16px 40px;
+        }
+
+        .container {
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+
+        .hero {
+            margin-bottom: 22px;
+            animation: fadeInUp 450ms ease;
+        }
+
+        .hero h1 {
+            font-size: clamp(1.85rem, 3vw, 3rem);
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            color: var(--muted);
+            max-width: 760px;
+            line-height: 1.5;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(14px);
+            overflow: hidden;
+            animation: fadeInUp 600ms ease;
+        }
+
+        .panel-head {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .panel-head h2 {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .panel-head p {
+            color: var(--muted);
+            font-size: 0.92rem;
+            line-height: 1.4;
+        }
+
+        .chip {
+            font-size: 0.78rem;
+            color: #78350f;
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        form {
+            display: grid;
+            gap: 18px;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-head h3 {
+            font-size: 1rem;
+        }
+
+        .section-head span {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 0.8rem;
+            line-height: 1.35;
+        }
+
+        input[type="number"],
+        select {
+            height: 46px;
+            border-radius: 12px;
+            border: 1px solid #d4d8e1;
+            padding: 0 12px;
+            font-size: 0.96rem;
+            background: var(--panel-strong);
+            outline: none;
+            transition: border-color 150ms ease, box-shadow 150ms ease;
+        }
+
+        input[type="number"]:focus,
+        select:focus,
+        details[open] summary:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+        }
+
+        details {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: rgba(248, 250, 252, 0.9);
+            overflow: hidden;
+        }
+
+        summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 16px 18px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .summary-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .summary-text small {
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .advanced-grid {
+            border-top: 1px solid var(--border);
+            padding: 16px 18px 18px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .microcopy {
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        button {
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            padding: 12px 18px;
+            transition: transform 120ms ease, filter 160ms ease;
+        }
+
+        button:hover {
+            filter: brightness(1.03);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .error {
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #fef3f2;
+            border: 1px solid #fecdca;
+            color: var(--danger);
+            font-size: 0.92rem;
+        }
+
+        .stack {
+            display: grid;
+            gap: 16px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .stat-card,
+        .insight-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 16px;
+            animation: fadeInUp 680ms ease;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-sub {
+            color: var(--muted);
+            font-size: 0.82rem;
+            margin-top: 6px;
+        }
+
+        .insight-card h3 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .insight-card p {
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .list-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid rgba(20, 33, 61, 0.08);
+        }
+
+        .list-index {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            background: rgba(15, 118, 110, 0.12);
+            color: var(--primary-dark);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .scenario-title {
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .scenario-meta {
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        .empty-state {
+            min-height: 100%;
+            display: grid;
+            place-items: center;
+            text-align: left;
+            padding: 10px;
+        }
+
+        .empty-card {
+            width: 100%;
+            background: linear-gradient(160deg, rgba(15, 118, 110, 0.07), rgba(255, 255, 255, 0.96));
+            border: 1px solid rgba(15, 118, 110, 0.12);
+            border-radius: 20px;
+            padding: 22px;
+        }
+
+        .empty-card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 8px;
+        }
+
+        .empty-card p {
+            color: var(--muted);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .empty-points {
+            display: grid;
+            gap: 8px;
+            color: var(--text);
+            font-size: 0.92rem;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 920px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .panel-head,
+            .section-head,
+            .actions {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <section class="hero">
+            <h1>Student Performance Predictor</h1>
+            <p>Use a short, realistic set of study inputs for a quick prediction. Open advanced inputs only if you want a more detailed estimate.</p>
+        </section>
+
+        <section class="layout">
+            <section class="panel">
+                <div class="panel-head">
+                    <div>
+                        <h2>Quick Prediction</h2>
+                        <p>Designed to be completed in under a minute with values students can estimate easily.</p>
+                    </div>
+                    <span class="chip">Fast Mode</span>
+                </div>
+
+                <div class="panel-body">
+                    {% if error %}
+                    <div class="error">{{ error }}</div>
+                    {% endif %}
+
+                    <form action="/predict" method="POST">
+                        <div>
+                            <div class="section-head">
+                                <h3>Core Inputs</h3>
+                                <span>Most useful factors only</span>
+                            </div>
+                            <div class="grid">
+                                <div class="field">
+                                    <label for="hours_studied">Study Hours Per Day</label>
+                                    <input id="hours_studied" type="number" name="Hours_Studied" min="0" max="24" step="0.1" value="{{ values['Hours_Studied'] }}" required>
+                                    <p class="hint">Use your average daily study time, not yearly hours.</p>
+                                </div>
+
+                                <div class="field">
+                                    <label for="attendance">Attendance (%)</label>
+                                    <input id="attendance" type="number" name="Attendance" min="0" max="100" step="0.1" value="{{ values['Attendance'] }}" required>
+                                    <p class="hint">Approximate attendance percentage for the current term.</p>
+                                </div>
+
+                                <div class="field">
+                                    <label for="previous_scores">Recent Average Score</label>
+                                    <input id="previous_scores" type="number" name="Previous_Scores" min="0" max="100" step="0.1" value="{{ values['Previous_Scores'] }}" required>
+                                    <p class="hint">Use the average of your last few tests or exams.</p>
+                                </div>
+
+                                <div class="field">
+                                    <label for="sleep_hours">Sleep Hours Per Day</label>
+                                    <input id="sleep_hours" type="number" name="Sleep_Hours" min="0" max="24" step="0.1" value="{{ values['Sleep_Hours'] }}" required>
+                                    <p class="hint">A daily average is enough.</p>
+                                </div>
+
+                                <div class="field">
+                                    <label for="tutoring_sessions">Tutoring Sessions Per Week</label>
+                                    <input id="tutoring_sessions" type="number" name="Tutoring_Sessions" min="0" max="20" step="1" value="{{ values['Tutoring_Sessions'] }}" required>
+                                    <p class="hint">Count formal tutoring or regular doubt-clearing sessions.</p>
+                                </div>
+
+                                <div class="field">
+                                    <label for="motivation_level">Motivation Level</label>
+                                    <select id="motivation_level" name="Motivation_Level" required>
+                                        <option value="Low" {% if values['Motivation_Level'] == 'Low' %}selected{% endif %}>Low</option>
+                                        <option value="Medium" {% if values['Motivation_Level'] == 'Medium' %}selected{% endif %}>Medium</option>
+                                        <option value="High" {% if values['Motivation_Level'] == 'High' %}selected{% endif %}>High</option>
+                                    </select>
+                                    <p class="hint">Use your current study consistency, not your ideal level.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <details>
+                            <summary>
+                                <span class="summary-text">
+                                    <span>Advanced Inputs</span>
+                                    <small>Optional details for a more tailored estimate</small>
+                                </span>
+                                <span class="chip">Optional</span>
+                            </summary>
+
+                            <div class="advanced-grid">
+                                <div class="grid">
+                                    <div class="field">
+                                        <label for="physical_activity">Physical Activity Hours Per Week</label>
+                                        <input id="physical_activity" type="number" name="Physical_Activity" min="0" max="40" step="0.1" value="{{ values['Physical_Activity'] }}" required>
+                                    </div>
+
+                                    <div class="field">
+                                        <label for="parental_involvement">Parental Involvement</label>
+                                        <select id="parental_involvement" name="Parental_Involvement" required>
+                                            <option value="Low" {% if values['Parental_Involvement'] == 'Low' %}selected{% endif %}>Low</option>
+                                            <option value="Medium" {% if values['Parental_Involvement'] == 'Medium' %}selected{% endif %}>Medium</option>
+                                            <option value="High" {% if values['Parental_Involvement'] == 'High' %}selected{% endif %}>High</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="field">
+                                        <label for="access_to_resources">Access to Resources</label>
+                                        <select id="access_to_resources" name="Access_to_Resources" required>
+                                            <option value="Low" {% if values['Access_to_Resources'] == 'Low' %}selected{% endif %}>Low</option>
+                                            <option value="Medium" {% if values['Access_to_Resources'] == 'Medium' %}selected{% endif %}>Medium</option>
+                                            <option value="High" {% if values['Access_to_Resources'] == 'High' %}selected{% endif %}>High</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="field">
+                                        <label for="peer_influence">Peer Influence</label>
+                                        <select id="peer_influence" name="Peer_Influence" required>
+                                            <option value="Negative" {% if values['Peer_Influence'] == 'Negative' %}selected{% endif %}>Negative</option>
+                                            <option value="Neutral" {% if values['Peer_Influence'] == 'Neutral' %}selected{% endif %}>Neutral</option>
+                                            <option value="Positive" {% if values['Peer_Influence'] == 'Positive' %}selected{% endif %}>Positive</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="field">
+                                        <label for="family_income">Family Income</label>
+                                        <select id="family_income" name="Family_Income" required>
+                                            <option value="Low" {% if values['Family_Income'] == 'Low' %}selected{% endif %}>Low</option>
+                                            <option value="Medium" {% if values['Family_Income'] == 'Medium' %}selected{% endif %}>Medium</option>
+                                            <option value="High" {% if values['Family_Income'] == 'High' %}selected{% endif %}>High</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="field">
+                                        <label for="teacher_quality">Teacher Quality</label>
+                                        <select id="teacher_quality" name="Teacher_Quality" required>
+                                            <option value="Low" {% if values['Teacher_Quality'] == 'Low' %}selected{% endif %}>Low</option>
+                                            <option value="Medium" {% if values['Teacher_Quality'] == 'Medium' %}selected{% endif %}>Medium</option>
+                                            <option value="High" {% if values['Teacher_Quality'] == 'High' %}selected{% endif %}>High</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="field">
+                                        <label for="school_type">School Type</label>
+                                        <select id="school_type" name="School_Type" required>
+                                            <option value="Public" {% if values['School_Type'] == 'Public' %}selected{% endif %}>Public</option>
+                                            <option value="Private" {% if values['School_Type'] == 'Private' %}selected{% endif %}>Private</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="field">
+                                        <label for="distance_from_home">Distance from Home</label>
+                                        <select id="distance_from_home" name="Distance_from_Home" required>
+                                            <option value="Near" {% if values['Distance_from_Home'] == 'Near' %}selected{% endif %}>Near</option>
+                                            <option value="Moderate" {% if values['Distance_from_Home'] == 'Moderate' %}selected{% endif %}>Moderate</option>
+                                            <option value="Far" {% if values['Distance_from_Home'] == 'Far' %}selected{% endif %}>Far</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="field">
+                                        <label for="parental_education_level">Parental Education Level</label>
+                                        <select id="parental_education_level" name="Parental_Education_Level" required>
+                                            <option value="High School" {% if values['Parental_Education_Level'] == 'High School' %}selected{% endif %}>High School</option>
+                                            <option value="Undergraduate" {% if values['Parental_Education_Level'] == 'Undergraduate' %}selected{% endif %}>Undergraduate</option>
+                                            <option value="Postgraduate" {% if values['Parental_Education_Level'] == 'Postgraduate' %}selected{% endif %}>Postgraduate</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="field">
+                                        <label for="internet_access">Internet Access</label>
+                                        <select id="internet_access" name="Internet_Access" required>
+                                            <option value="Yes" {% if values['Internet_Access'] == 'Yes' %}selected{% endif %}>Yes</option>
+                                            <option value="No" {% if values['Internet_Access'] == 'No' %}selected{% endif %}>No</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="field">
+                                        <label for="learning_disabilities">Learning Disabilities</label>
+                                        <select id="learning_disabilities" name="Learning_Disabilities" required>
+                                            <option value="Yes" {% if values['Learning_Disabilities'] == 'Yes' %}selected{% endif %}>Yes</option>
+                                            <option value="No" {% if values['Learning_Disabilities'] == 'No' %}selected{% endif %}>No</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="field">
+                                        <label for="extracurricular_activities">Extracurricular Activities</label>
+                                        <select id="extracurricular_activities" name="Extracurricular_Activities" required>
+                                            <option value="Yes" {% if values['Extracurricular_Activities'] == 'Yes' %}selected{% endif %}>Yes</option>
+                                            <option value="No" {% if values['Extracurricular_Activities'] == 'No' %}selected{% endif %}>No</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+
+                        <div class="actions">
+                            <p class="microcopy">Quick mode uses smart defaults for optional fields so users do not need to answer everything.</p>
+                            <button type="submit">Predict and Suggest Improvements</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <section class="stack">
+                {% if prediction %}
+                <section class="stats">
+                    <article class="stat-card">
+                        <p class="stat-label">Predicted Score</p>
+                        <p class="stat-value">{{ prediction }}</p>
+                        <p class="stat-sub">Expected range: {{ score_range[0] }} to {{ score_range[1] }}</p>
+                    </article>
+                    <article class="stat-card">
+                        <p class="stat-label">Grade</p>
+                        <p class="stat-value">{{ grade }}</p>
+                        <p class="stat-sub">Based on the predicted exam score</p>
+                    </article>
+                    <article class="stat-card">
+                        <p class="stat-label">Risk Level</p>
+                        <p class="stat-value">{{ risk }}</p>
+                        <p class="stat-sub">Use this as an early warning signal</p>
+                    </article>
+                </section>
+
+                <section class="insight-card">
+                    <h3>Recommended Next Steps</h3>
+                    <div class="list">
+                        {% for item in recommendations %}
+                        <div class="list-item">
+                            <span class="list-index">{{ loop.index }}</span>
+                            <div>{{ item }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="insight-card">
+                    <h3>What Could Improve the Score Fastest</h3>
+                    {% if scenarios %}
+                    <div class="list">
+                        {% for item in scenarios %}
+                        <div class="list-item">
+                            <span class="list-index">+</span>
+                            <div>
+                                <p class="scenario-title">{{ item.label }}</p>
+                                <p class="scenario-meta">{{ item.field_label }} to {{ item.new_value }} | Predicted score {{ item.score }} | Gain {{ item.gain }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p>No obvious quick-win scenario was found from the tested adjustments. The current profile already looks balanced.</p>
+                    {% endif %}
+                </section>
+                {% else %}
+                <section class="empty-state">
+                    <div class="empty-card">
+                        <h3>Make the first prediction quickly</h3>
+                        <p>This version is designed to reduce user effort. Start with a few realistic inputs and get a prediction with practical suggestions.</p>
+                        <div class="empty-points">
+                            <div>Study time is asked per day, not yearly.</div>
+                            <div>Optional details are hidden under Advanced Inputs.</div>
+                            <div>Results include guidance, not just a number.</div>
+                        </div>
+                    </div>
+                </section>
+                {% endif %}
+            </section>
+        </section>
+    </main>
+</body>
+</html>
