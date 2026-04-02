@@ -1,4 +1,6 @@
 from functools import lru_cache
+import math
+import os
 from pathlib import Path
 
 from flask import Flask, render_template, request
@@ -31,6 +33,21 @@ CATEGORICAL_FIELDS = [
     "Learning_Disabilities",
     "Extracurricular_Activities",
 ]
+
+CATEGORICAL_OPTIONS = {
+    "Parental_Involvement": {"Low", "Medium", "High"},
+    "Access_to_Resources": {"Low", "Medium", "High"},
+    "Motivation_Level": {"Low", "Medium", "High"},
+    "Peer_Influence": {"Negative", "Neutral", "Positive"},
+    "Family_Income": {"Low", "Medium", "High"},
+    "Teacher_Quality": {"Low", "Medium", "High"},
+    "School_Type": {"Public", "Private"},
+    "Distance_from_Home": {"Near", "Moderate", "Far"},
+    "Parental_Education_Level": {"High School", "Undergraduate", "Postgraduate"},
+    "Internet_Access": {"Yes", "No"},
+    "Learning_Disabilities": {"Yes", "No"},
+    "Extracurricular_Activities": {"Yes", "No"},
+}
 
 FIELD_DEFAULTS = {
     "Hours_Studied": "2.0",
@@ -118,26 +135,28 @@ def _build_model_input(values, model_features):
     return pd.DataFrame([[row[col] for col in model_features]], columns=model_features)
 
 
-def _grade_and_risk(prediction):
-    if prediction >= 85:
-        grade = "A"
-    elif prediction >= 70:
-        grade = "B"
-    elif prediction >= 60:
-        grade = "C"
-    elif prediction >= 50:
-        grade = "D"
+def calculate_grade(score):
+    if score >= 90:
+        return "A+"
+    elif score >= 80:
+        return "A"
+    elif score >= 70:
+        return "B"
+    elif score >= 60:
+        return "C"
+    elif score >= 50:
+        return "D"
     else:
-        grade = "F"
+        return "F"
 
-    if prediction < 60:
-        risk = "High Risk"
-    elif prediction <= 75:
-        risk = "Medium Risk"
+
+def calculate_risk(score):
+    if score >= 80:
+        return "Low"
+    elif score >= 60:
+        return "Medium"
     else:
-        risk = "Low Risk"
-
-    return grade, risk
+        return "High"
 
 
 def _build_recommendations(values):
@@ -216,10 +235,21 @@ def _validate_values(values):
 
     cleaned = dict(values)
     for field, (min_value, max_value) in numeric_ranges.items():
-        value = float(cleaned[field])
+        try:
+            value = float(cleaned[field])
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{FIELD_LABELS.get(field, field)} must be a valid number.") from exc
+
+        if not math.isfinite(value):
+            raise ValueError(f"{FIELD_LABELS.get(field, field)} must be a finite number.")
         if value < min_value or value > max_value:
             raise ValueError(f"{FIELD_LABELS.get(field, field)} must be between {min_value} and {max_value}.")
         cleaned[field] = str(value)
+
+    for field, allowed_values in CATEGORICAL_OPTIONS.items():
+        selected_value = cleaned.get(field, "").strip()
+        if selected_value not in allowed_values:
+            raise ValueError(f"{field.replace('_', ' ')} must be one of: {', '.join(sorted(allowed_values))}.")
 
     return cleaned
 
@@ -235,16 +265,17 @@ def predict():
         values = _validate_values(values)
         input_df = _build_model_input(values, model_features)
 
-        prediction = float(model.predict(input_df)[0])
-        grade, risk = _grade_and_risk(prediction)
+        predicted_score = float(model.predict(input_df)[0])
+        grade = calculate_grade(predicted_score)
+        risk = calculate_risk(predicted_score)
         recommendations = _build_recommendations(values)
-        scenarios = _build_improvement_scenarios(values, model, model_features, prediction)
-        score_range = (round(prediction - 2, 2), round(prediction + 2, 2))
+        scenarios = _build_improvement_scenarios(values, model, model_features, predicted_score)
+        score_range = (round(predicted_score - 2, 2), round(predicted_score + 2, 2))
 
         return render_template(
             "index.html",
             values=values,
-            prediction=round(prediction, 2),
+            prediction=round(predicted_score, 2),
             grade=grade,
             risk=risk,
             score_range=score_range,
@@ -256,6 +287,7 @@ def predict():
         values = _merge_form_with_defaults(request.form)
         return render_template("index.html", values=values, error=str(exc)), 400
     except Exception:
+        app.logger.exception("Unexpected error while generating prediction.")
         values = _merge_form_with_defaults(request.form)
         return render_template(
             "index.html",
@@ -264,4 +296,4 @@ def predict():
         ), 500
 
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=os.getenv("FLASK_DEBUG") == "1", use_reloader=False)

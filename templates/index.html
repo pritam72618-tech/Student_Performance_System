@@ -443,7 +443,7 @@
                     <div class="error">{{ error }}</div>
                     {% endif %}
 
-                    <form action="/predict" method="POST">
+                    <form action="{{ url_for('predict') }}" method="POST">
                         <div>
                             <div class="section-head">
                                 <h3>Core Inputs</h3>
@@ -615,7 +615,7 @@
             </section>
 
             <section class="stack">
-                {% if prediction %}
+                {% if prediction is defined and prediction is not none %}
                 <section class="stats">
                     <article class="stat-card">
                         <p class="stat-label">Predicted Score</p>
@@ -632,6 +632,12 @@
                         <p class="stat-value">{{ risk }}</p>
                         <p class="stat-sub">Use this as an early warning signal</p>
                     </article>
+                </section>
+                <section class="insight-card">
+                    <h3>Summary</h3>
+                    <p>Predicted Score: {{ prediction }}</p>
+                    <p>Grade: {{ grade }}</p>
+                    <p>Risk Level: {{ risk }}</p>
                 </section>
 
                 <section class="insight-card">
