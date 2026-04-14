@@ -452,31 +452,31 @@
                             <div class="grid">
                                 <div class="field">
                                     <label for="hours_studied">Study Hours Per Day</label>
-                                    <input id="hours_studied" type="number" name="Hours_Studied" min="0" max="24" step="0.1" value="{{ values['Hours_Studied'] }}" required>
+                                    <input id="hours_studied" type="number" name="Hours_Studied" min="0" max="12" step="0.1" value="{{ values['Hours_Studied'] }}" required>
                                     <p class="hint">Use your average daily study time, not yearly hours.</p>
                                 </div>
 
                                 <div class="field">
                                     <label for="attendance">Attendance (%)</label>
-                                    <input id="attendance" type="number" name="Attendance" min="0" max="100" step="0.1" value="{{ values['Attendance'] }}" required>
+                                    <input id="attendance" type="number" name="Attendance" min="60" max="100" step="0.1" value="{{ values['Attendance'] }}" required>
                                     <p class="hint">Approximate attendance percentage for the current term.</p>
                                 </div>
 
                                 <div class="field">
                                     <label for="previous_scores">Recent Average Score</label>
-                                    <input id="previous_scores" type="number" name="Previous_Scores" min="0" max="100" step="0.1" value="{{ values['Previous_Scores'] }}" required>
+                                    <input id="previous_scores" type="number" name="Previous_Scores" min="50" max="100" step="0.1" value="{{ values['Previous_Scores'] }}" required>
                                     <p class="hint">Use the average of your last few tests or exams.</p>
                                 </div>
 
                                 <div class="field">
                                     <label for="sleep_hours">Sleep Hours Per Day</label>
-                                    <input id="sleep_hours" type="number" name="Sleep_Hours" min="0" max="24" step="0.1" value="{{ values['Sleep_Hours'] }}" required>
+                                    <input id="sleep_hours" type="number" name="Sleep_Hours" min="4" max="10" step="0.1" value="{{ values['Sleep_Hours'] }}" required>
                                     <p class="hint">A daily average is enough.</p>
                                 </div>
 
                                 <div class="field">
                                     <label for="tutoring_sessions">Tutoring Sessions Per Week</label>
-                                    <input id="tutoring_sessions" type="number" name="Tutoring_Sessions" min="0" max="20" step="1" value="{{ values['Tutoring_Sessions'] }}" required>
+                                    <input id="tutoring_sessions" type="number" name="Tutoring_Sessions" min="0" max="8" step="1" value="{{ values['Tutoring_Sessions'] }}" required>
                                     <p class="hint">Count formal tutoring or regular doubt-clearing sessions.</p>
                                 </div>
 

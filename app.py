@@ -118,7 +118,11 @@ def _build_model_input(values, model_features):
         if field not in row:
             continue
         raw_value = values.get(field, "").strip()
-        row[field] = float(raw_value) if raw_value else 0.0
+        value = float(raw_value) if raw_value else 0.0
+        # The model was trained with weekly study hours; UI accepts daily hours.
+        if field == "Hours_Studied":
+            value = min(value * 5, 44)
+        row[field] = value
 
     # Dynamically map each categorical selection to "<feature>_<selected_value>".
     # With drop_first=True, baseline categories do not exist as columns; those stay 0.
@@ -193,12 +197,86 @@ def _build_recommendations(values):
     return recommendations[:3]
 
 
+def _calibrate_prediction(raw_prediction, values):
+    previous_scores = float(values["Previous_Scores"])
+    attendance = float(values["Attendance"])
+    study_hours_day = float(values["Hours_Studied"])
+    sleep_hours = float(values["Sleep_Hours"])
+    tutoring_sessions = float(values["Tutoring_Sessions"])
+    physical_activity = float(values["Physical_Activity"])
+
+    parental_involvement = values["Parental_Involvement"]
+    access_to_resources = values["Access_to_Resources"]
+    motivation = values["Motivation_Level"]
+    peer_influence = values["Peer_Influence"]
+    family_income = values["Family_Income"]
+    teacher_quality = values["Teacher_Quality"]
+    school_type = values["School_Type"]
+    distance_from_home = values["Distance_from_Home"]
+    parental_education = values["Parental_Education_Level"]
+    internet_access = values["Internet_Access"]
+    learning_disabilities = values["Learning_Disabilities"]
+    extracurricular = values["Extracurricular_Activities"]
+
+    def _norm(value, min_value, max_value):
+        clamped = max(min_value, min(value, max_value))
+        if max_value == min_value:
+            return 0.0
+        return (clamped - min_value) / (max_value - min_value)
+
+    study_component = _norm(study_hours_day, 0, 12) * 100
+    sleep_component = _norm(sleep_hours, 4, 10) * 100
+    tutoring_component = _norm(tutoring_sessions, 0, 8) * 100
+
+    base_score = (
+        (0.68 * previous_scores)
+        + (0.14 * attendance)
+        + (0.14 * study_component)
+        + (0.02 * sleep_component)
+        + (0.02 * tutoring_component)
+    )
+
+    bonus = 0.0
+    bonus += {"Low": -2.0, "Medium": 0.0, "High": 2.0}.get(parental_involvement, 0.0)
+    bonus += {"Low": -2.0, "Medium": 0.0, "High": 2.0}.get(access_to_resources, 0.0)
+    bonus += {"Low": -4.0, "Medium": 0.0, "High": 4.0}.get(motivation, 0.0)
+    bonus += {"Negative": -2.0, "Neutral": 0.0, "Positive": 2.0}.get(peer_influence, 0.0)
+    bonus += {"Low": -1.5, "Medium": 0.0, "High": 1.5}.get(family_income, 0.0)
+    bonus += {"Low": -2.0, "Medium": 0.0, "High": 2.0}.get(teacher_quality, 0.0)
+    bonus += {"Public": 0.0, "Private": 0.5}.get(school_type, 0.0)
+    bonus += {"Far": -1.0, "Moderate": 0.0, "Near": 1.0}.get(distance_from_home, 0.0)
+    bonus += {"High School": -0.8, "Undergraduate": 0.2, "Postgraduate": 1.0}.get(parental_education, 0.0)
+    bonus += {"No": -1.0, "Yes": 1.0}.get(internet_access, 0.0)
+    bonus += {"Yes": -1.5, "No": 0.0}.get(learning_disabilities, 0.0)
+    bonus += {"No": 0.0, "Yes": 0.8}.get(extracurricular, 0.0)
+
+    if physical_activity < 1:
+        bonus -= 0.6
+    elif physical_activity <= 10:
+        bonus += 0.6
+    else:
+        bonus -= 0.8
+
+    anchor_score = base_score + bonus
+
+    # Guardrails so very strong/weak core profiles remain intuitive.
+    if previous_scores >= 88 and attendance >= 75 and study_hours_day >= 6 and tutoring_sessions >= 2:
+        anchor_score = max(anchor_score, 88.0)
+    if previous_scores >= 95 and attendance >= 80 and study_hours_day >= 7 and tutoring_sessions >= 3:
+        anchor_score = max(anchor_score, 92.0)
+    if previous_scores <= 60 and attendance <= 70 and study_hours_day <= 2:
+        anchor_score = min(anchor_score, 65.0)
+
+    calibrated = (0.10 * raw_prediction) + (0.90 * anchor_score)
+    return max(0.0, min(100.0, calibrated))
+
+
 def _build_improvement_scenarios(values, model, model_features, current_prediction):
     scenario_specs = [
-        ("Attendance", min(float(values["Attendance"]) + 10, 100), "Improve attendance"),
-        ("Hours_Studied", min(float(values["Hours_Studied"]) + 1, 6), "Study 1 more hour per day"),
-        ("Sleep_Hours", min(float(values["Sleep_Hours"]) + 1, 9), "Sleep 1 more hour per day"),
-        ("Tutoring_Sessions", min(float(values["Tutoring_Sessions"]) + 1, 4), "Add 1 tutoring session per week"),
+        ("Attendance", min(float(values["Attendance"]) + 5, 100), "Improve attendance"),
+        ("Hours_Studied", min(float(values["Hours_Studied"]) + 1, 12), "Study 1 more hour per day"),
+        ("Sleep_Hours", min(float(values["Sleep_Hours"]) + 1, 10), "Sleep 1 more hour per day"),
+        ("Tutoring_Sessions", min(float(values["Tutoring_Sessions"]) + 1, 8), "Add 1 tutoring session per week"),
     ]
 
     scenarios = []
@@ -208,7 +286,8 @@ def _build_improvement_scenarios(values, model, model_features, current_predicti
         scenario_values = dict(values)
         scenario_values[field] = str(new_value)
         scenario_df = _build_model_input(scenario_values, model_features)
-        scenario_prediction = float(model.predict(scenario_df)[0])
+        scenario_raw_prediction = float(model.predict(scenario_df)[0])
+        scenario_prediction = _calibrate_prediction(scenario_raw_prediction, scenario_values)
         scenarios.append(
             {
                 "label": label,
@@ -225,11 +304,11 @@ def _build_improvement_scenarios(values, model, model_features, current_predicti
 
 def _validate_values(values):
     numeric_ranges = {
-        "Hours_Studied": (0, 24),
-        "Attendance": (0, 100),
-        "Sleep_Hours": (0, 24),
-        "Previous_Scores": (0, 100),
-        "Tutoring_Sessions": (0, 20),
+        "Hours_Studied": (0, 12),
+        "Attendance": (60, 100),
+        "Sleep_Hours": (4, 10),
+        "Previous_Scores": (50, 100),
+        "Tutoring_Sessions": (0, 8),
         "Physical_Activity": (0, 40),
     }
 
@@ -265,7 +344,8 @@ def predict():
         values = _validate_values(values)
         input_df = _build_model_input(values, model_features)
 
-        predicted_score = float(model.predict(input_df)[0])
+        raw_predicted_score = float(model.predict(input_df)[0])
+        predicted_score = _calibrate_prediction(raw_predicted_score, values)
         grade = calculate_grade(predicted_score)
         risk = calculate_risk(predicted_score)
         recommendations = _build_recommendations(values)
